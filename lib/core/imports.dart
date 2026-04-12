@@ -29,3 +29,4 @@ export 'package:ftpulse/presentation/widgets/neon_toggle_switch.dart';
 export 'package:ftpulse/core/ui/animations/staggered_scale_fade.dart';
 export 'package:ftpulse/core/utils/haptics.dart';
 export 'package:ftpulse/data/services/biometric_service.dart';
+export 'package:ftpulse/core/utils/responsive.dart';

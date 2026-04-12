@@ -65,13 +65,15 @@ class _HomePageState extends State<HomePage>
               SliverAppBar.large(
                 backgroundColor: Colors.black.withOpacity(0.4),
                 scrolledUnderElevation: 0,
+                centerTitle: false,
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(
                     bottom: Radius.circular(24),
                   ),
                 ),
-                expandedHeight: 100,
+                expandedHeight: 140,
                 flexibleSpace: FlexibleSpaceBar(
+                  centerTitle: false,
                   title: Text(
                     'Connections',
                     style: GoogleFonts.poppins(
@@ -96,8 +98,8 @@ class _HomePageState extends State<HomePage>
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.listHPad(context),
                     vertical: 12,
                   ),
                   sliver: SliverList(

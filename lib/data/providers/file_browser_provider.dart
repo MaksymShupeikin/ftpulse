@@ -213,6 +213,27 @@ class FileBrowserProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> downloadEntity({
+    required FileEntity entity,
+    required String localPath,
+    Function(String)? onProgress,
+  }) async {
+    if (entity.isDirectory) {
+      await _networkService.downloadDirectory(
+        connection: connection,
+        remotePath: entity.path,
+        localPath: localPath,
+        onProgress: onProgress,
+      );
+    } else {
+      await _networkService.downloadFile(
+        connection: connection,
+        remotePath: entity.path,
+        localPath: localPath,
+      );
+    }
+  }
+
   Future<bool> renameFile(FileEntity file, String newName) async {
     try {
       final parentPath = file.path.substring(

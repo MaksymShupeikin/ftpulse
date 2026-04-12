@@ -280,7 +280,7 @@ class NetworkService {
       await client
           .downloadFile(fileName, localFile)
           .timeout(
-            const Duration(seconds: 60),
+            const Duration(seconds: 120),
             onTimeout: () {
               throw Exception(
                 'Download timed out. Check Firewall/Passive mode.',
@@ -297,6 +297,167 @@ class NetworkService {
       rethrow;
     } finally {
       await client.disconnect();
+    }
+  }
+
+  Future<void> downloadDirectory({
+    required ServerConnection connection,
+    required String remotePath,
+    required String localPath,
+    Function(String)? onProgress,
+  }) async {
+    if (connection.isSftp) {
+      await _downloadDirectorySftp(
+        connection,
+        remotePath,
+        localPath,
+        onProgress,
+      );
+    } else {
+      await _downloadDirectoryFtp(
+        connection,
+        remotePath,
+        localPath,
+        onProgress,
+      );
+    }
+  }
+
+  Future<void> _downloadDirectorySftp(
+    ServerConnection connection,
+    String remotePath,
+    String localPath,
+    Function(String)? onProgress,
+  ) async {
+    final client = await _connectSsh(connection);
+    try {
+      final sftp = await client.sftp();
+
+      // Ensure local root dir exists
+      final localRootDir = Directory(localPath);
+      if (!await localRootDir.exists()) {
+        await localRootDir.create(recursive: true);
+      }
+
+      await _downloadRecursiveSftp(
+        sftp,
+        remotePath,
+        localPath,
+        remotePath,
+        onProgress,
+      );
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<void> _downloadRecursiveSftp(
+    SftpClient sftp,
+    String remotePath,
+    String localBasePath,
+    String remoteRootDir,
+    Function(String)? onProgress,
+  ) async {
+    final items = await sftp.listdir(remotePath);
+
+    for (final item in items) {
+      if (item.filename == '.' || item.filename == '..') continue;
+
+      final remoteFullPath = remotePath == '/'
+          ? '/${item.filename}'
+          : '$remotePath/${item.filename}';
+
+      final relativePath = p.relative(remoteFullPath, from: remoteRootDir);
+      final localFullPath = p.join(localBasePath, relativePath);
+
+      if (item.attr.isDirectory) {
+        await Directory(localFullPath).create(recursive: true);
+        await _downloadRecursiveSftp(
+          sftp,
+          remoteFullPath,
+          localBasePath,
+          remoteRootDir,
+          onProgress,
+        );
+      } else {
+        if (onProgress != null) onProgress(item.filename);
+
+        final remoteFile = await sftp.open(remoteFullPath);
+        final stat = await sftp.stat(remoteFullPath);
+        final stream = remoteFile.read(length: stat.size ?? 0);
+
+        final localFile = File(localFullPath);
+        final sink = localFile.openWrite();
+        await sink.addStream(stream);
+        await sink.close();
+        await remoteFile.close();
+      }
+    }
+  }
+
+  Future<void> _downloadDirectoryFtp(
+    ServerConnection connection,
+    String remotePath,
+    String localPath,
+    Function(String)? onProgress,
+  ) async {
+    final client = await _connectFtpSmart(connection);
+    try {
+      // Ensure local root dir exists
+      final localRootDir = Directory(localPath);
+      if (!await localRootDir.exists()) {
+        await localRootDir.create(recursive: true);
+      }
+
+      await _downloadRecursiveFtp(
+        client,
+        remotePath,
+        localPath,
+        remotePath,
+        onProgress,
+      );
+    } finally {
+      await client.disconnect();
+    }
+  }
+
+  Future<void> _downloadRecursiveFtp(
+    FTPConnect client,
+    String remotePath,
+    String localBasePath,
+    String remoteRootDir,
+    Function(String)? onProgress,
+  ) async {
+    await client.changeDirectory(remotePath);
+    final items = await client.listDirectoryContent();
+
+    for (final item in items) {
+      if (item.name == '.' || item.name == '..') continue;
+
+      final remoteFullPath = remotePath == '/'
+          ? '/${item.name}'
+          : '$remotePath/${item.name}';
+
+      final relativePath = p.relative(remoteFullPath, from: remoteRootDir);
+      final localFullPath = p.join(localBasePath, relativePath);
+
+      if (item.type == FTPEntryType.dir) {
+        await Directory(localFullPath).create(recursive: true);
+        await _downloadRecursiveFtp(
+          client,
+          remoteFullPath,
+          localBasePath,
+          remoteRootDir,
+          onProgress,
+        );
+        // Back to current level
+        await client.changeDirectory(remotePath);
+      } else {
+        if (onProgress != null) onProgress(item.name);
+        final localFile = File(localFullPath);
+        await client.setTransferType(TransferType.binary);
+        await client.downloadFile(item.name, localFile);
+      }
     }
   }
 

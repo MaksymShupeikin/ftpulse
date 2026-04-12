@@ -8,12 +8,10 @@ class ConnectionActionsModal extends StatefulWidget {
   const ConnectionActionsModal({super.key, this.connection});
 
   @override
-  State<ConnectionActionsModal> createState() =>
-      _ConnectionActionsModalState();
+  State<ConnectionActionsModal> createState() => _ConnectionActionsModalState();
 }
 
-class _ConnectionActionsModalState
-    extends State<ConnectionActionsModal> {
+class _ConnectionActionsModalState extends State<ConnectionActionsModal> {
   late TextEditingController _nameController;
   late TextEditingController _hostController;
   late TextEditingController _portController;
@@ -36,9 +34,7 @@ class _ConnectionActionsModalState
       final conn = widget.connection!;
       _nameController = TextEditingController(text: conn.name);
       _hostController = TextEditingController(text: conn.host);
-      _portController = TextEditingController(
-        text: conn.port.toString(),
-      );
+      _portController = TextEditingController(text: conn.port.toString());
       _userController = TextEditingController(text: conn.username);
       _passController = TextEditingController(text: conn.password);
       _localIsSftp = conn.isSftp;
@@ -47,9 +43,7 @@ class _ConnectionActionsModalState
       final draft = provider.draft;
       _nameController = TextEditingController(text: draft.name);
       _hostController = TextEditingController(text: draft.host);
-      _portController = TextEditingController(
-        text: draft.port.toString(),
-      );
+      _portController = TextEditingController(text: draft.port.toString());
       _userController = TextEditingController(text: draft.username);
       _passController = TextEditingController(text: draft.password);
       _localIsSftp = draft.isSftp;
@@ -84,9 +78,7 @@ class _ConnectionActionsModalState
       setState(() => _useBiometrics = value);
 
       if (!isEditMode) {
-        context.read<ConnectionsProvider>().updateDraft(
-          useBiometrics: value,
-        );
+        context.read<ConnectionsProvider>().updateDraft(useBiometrics: value);
       }
     }
   }
@@ -96,13 +88,17 @@ class _ConnectionActionsModalState
     final provider = context.watch<ConnectionsProvider>();
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return GestureDetector(
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: Responsive.modalMaxWidth(context),
+        ),
+        child: GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.opaque,
       child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(30),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
@@ -112,18 +108,10 @@ class _ConnectionActionsModalState
                 top: Radius.circular(30),
               ),
               border: Border(
-                top: BorderSide(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1,
-                ),
+                top: BorderSide(color: Colors.white.withOpacity(0.2), width: 1),
               ),
             ),
-            padding: EdgeInsets.fromLTRB(
-              20,
-              20,
-              20,
-              bottomInset + 20,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -222,10 +210,7 @@ class _ConnectionActionsModalState
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 10,
-                        sigmaY: 10,
-                      ),
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
@@ -259,9 +244,7 @@ class _ConnectionActionsModalState
                               child: Text(
                                 'Protect with FaceID',
                                 style: GoogleFonts.poppins(
-                                  color: Colors.white.withOpacity(
-                                    0.8,
-                                  ),
+                                  color: Colors.white.withOpacity(0.8),
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -271,9 +254,7 @@ class _ConnectionActionsModalState
                             CupertinoSwitch(
                               value: _useBiometrics,
                               activeColor: const Color(0xFF00C2FF),
-                              trackColor: Colors.white.withOpacity(
-                                0.1,
-                              ),
+                              trackColor: Colors.white.withOpacity(0.1),
                               onChanged: _onBiometricChanged,
                             ),
                           ],
@@ -287,42 +268,31 @@ class _ConnectionActionsModalState
                   if (provider.connectionError != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: ErrorCard(
-                        error: provider.connectionError!,
-                      ),
+                      child: ErrorCard(error: provider.connectionError!),
                     ),
 
                   NeonButton(
-                    text: isEditMode
-                        ? 'Save Changes'
-                        : 'Connect & Save',
+                    text: isEditMode ? 'Save Changes' : 'Connect & Save',
                     isLoading: provider.isTestingConnection,
                     onTap: () async {
                       FocusManager.instance.primaryFocus?.unfocus();
                       bool success = false;
 
                       if (isEditMode) {
-                        final updatedConnection = widget.connection!
-                            .copyWith(
-                              name: _nameController.text,
-                              host: _hostController.text,
-                              port:
-                                  int.tryParse(
-                                    _portController.text,
-                                  ) ??
-                                  21,
-                              username: _userController.text,
-                              password: _passController.text,
-                              isSftp: _localIsSftp,
-                              useBiometrics: _useBiometrics,
-                            );
+                        final updatedConnection = widget.connection!.copyWith(
+                          name: _nameController.text,
+                          host: _hostController.text,
+                          port: int.tryParse(_portController.text) ?? 21,
+                          username: _userController.text,
+                          password: _passController.text,
+                          isSftp: _localIsSftp,
+                          useBiometrics: _useBiometrics,
+                        );
                         success = await provider.updateConnection(
                           updatedConnection,
                         );
                       } else {
-                        provider.updateDraft(
-                          useBiometrics: _useBiometrics,
-                        );
+                        provider.updateDraft(useBiometrics: _useBiometrics);
                         success = await provider.createFromDraft();
                       }
 
@@ -333,9 +303,8 @@ class _ConnectionActionsModalState
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => FileBrowserPage(
-                                connection: newConn,
-                              ),
+                              builder: (_) =>
+                                  FileBrowserPage(connection: newConn),
                             ),
                           );
                         }
@@ -343,8 +312,7 @@ class _ConnectionActionsModalState
                     },
                   ),
 
-                  if (isEditMode) ...[
-                    const SizedBox(height: 16),
+                  if (isEditMode)
                     NeonButton(
                       text: 'Delete Connection',
                       isRed: true,
@@ -376,11 +344,12 @@ class _ConnectionActionsModalState
                         );
                       },
                     ),
-                  ],
                 ],
               ),
             ),
           ),
+        ),
+      ),
         ),
       ),
     );

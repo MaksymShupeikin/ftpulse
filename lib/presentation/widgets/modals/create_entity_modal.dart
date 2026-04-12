@@ -72,7 +72,13 @@ class _CreateEntityModalState extends State<CreateEntityModal> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return GestureDetector(
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: Responsive.modalMaxWidth(context),
+        ),
+        child: GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.opaque,
       child: ClipRRect(
@@ -187,6 +193,8 @@ class _CreateEntityModalState extends State<CreateEntityModal> {
               ),
             ),
           ),
+        ),
+      ),
         ),
       ),
     );

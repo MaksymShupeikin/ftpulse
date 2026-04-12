@@ -147,7 +147,14 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return ClipRRect(
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: Responsive.modalMaxWidth(context),
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        child: ClipRRect(
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(30),
       ),
@@ -167,9 +174,6 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
             ),
           ),
           padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -364,6 +368,8 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
                   ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );

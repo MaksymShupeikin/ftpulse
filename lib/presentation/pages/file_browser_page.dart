@@ -133,6 +133,7 @@ class _FileBrowserLayoutState extends State<_FileBrowserLayout>
                   backgroundColor: Colors.black.withOpacity(0.4),
                   scrolledUnderElevation: 0,
                   pinned: true,
+                  centerTitle: false,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
                       bottom: Radius.circular(24),
@@ -148,8 +149,9 @@ class _FileBrowserLayoutState extends State<_FileBrowserLayout>
                     onPressed: handleBack,
                   ),
                   flexibleSpace: FlexibleSpaceBar(
+                    centerTitle: false,
                     titlePadding: const EdgeInsetsDirectional.only(
-                      start: 48,
+                      start: 56,
                       bottom: 16,
                     ),
                     title: Hero(
@@ -210,7 +212,10 @@ class _FileBrowserLayoutState extends State<_FileBrowserLayout>
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Responsive.listHPad(context),
+                      vertical: 16,
+                    ),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((
                         context,
@@ -293,105 +298,125 @@ class _FileBrowserLayoutState extends State<_FileBrowserLayout>
 
             Positioned(
               bottom: 32,
-              left: 16,
-              right: 16,
+              left: 0,
+              right: 0,
               child: SafeArea(
-                child: StaggeredScaleFade(
-                  animation: _fabController,
-                  child: SizedBox(
-                    height: 56,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: _isSearchActive ? 0.0 : 1.0,
-                          child: IgnorePointer(
-                            ignoring: _isSearchActive,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                NeonCircularButton(
-                                  icon: CupertinoIcons.cloud_upload,
-                                  onTap: () => showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor:
-                                        Colors.transparent,
-                                    barrierColor: Colors.black
-                                        .withOpacity(0.5),
-                                    builder: (context) =>
-                                        ChangeNotifierProvider.value(
-                                          value: provider,
-                                          child:
-                                              const UploadEntityModal(),
-                                        ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.listHPad(context),
+                  ),
+                  child: LayoutBuilder(
+                    builder: (_, constraints) {
+                      final availableWidth = constraints.maxWidth;
+                      return StaggeredScaleFade(
+                        animation: _fabController,
+                        child: SizedBox(
+                          height: 56,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              AnimatedOpacity(
+                                duration: const Duration(
+                                  milliseconds: 200,
+                                ),
+                                opacity: _isSearchActive ? 0.0 : 1.0,
+                                child: IgnorePointer(
+                                  ignoring: _isSearchActive,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      NeonCircularButton(
+                                        icon:
+                                            CupertinoIcons.cloud_upload,
+                                        onTap: () =>
+                                            showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              backgroundColor:
+                                                  Colors.transparent,
+                                              barrierColor: Colors.black
+                                                  .withOpacity(0.5),
+                                              builder: (context) =>
+                                                  ChangeNotifierProvider
+                                                      .value(
+                                                        value: provider,
+                                                        child: const UploadEntityModal(),
+                                                      ),
+                                            ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      NeonCircularButton(
+                                        icon: CupertinoIcons.add,
+                                        onTap: () =>
+                                            showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              backgroundColor:
+                                                  Colors.transparent,
+                                              barrierColor: Colors.black
+                                                  .withOpacity(0.5),
+                                              builder: (context) =>
+                                                  ChangeNotifierProvider
+                                                      .value(
+                                                        value: provider,
+                                                        child: const CreateEntityModal(),
+                                                      ),
+                                            ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-                                NeonCircularButton(
-                                  icon: CupertinoIcons.add,
-                                  onTap: () => showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor:
-                                        Colors.transparent,
-                                    barrierColor: Colors.black
-                                        .withOpacity(0.5),
-                                    builder: (context) =>
-                                        ChangeNotifierProvider.value(
-                                          value: provider,
-                                          child:
-                                              const CreateEntityModal(),
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: _isSearchActive ? 0.0 : 1.0,
-                          child: IgnorePointer(
-                            ignoring: _isSearchActive,
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: NeonCircularButton(
-                                icon: CupertinoIcons.refresh_bold,
-                                onTap: () => provider.refresh(),
                               ),
-                            ),
-                          ),
-                        ),
 
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: AnimatedContainer(
-                            duration: const Duration(
-                              milliseconds: 400,
-                            ),
-                            curve: Curves.easeOutCubic,
-                            width: _isSearchActive
-                                ? MediaQuery.of(context).size.width -
-                                      32
-                                : 56,
-                            height: 56,
-                            clipBehavior: Clip.hardEdge,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                            child: _isSearchActive
-                                ? _buildExpandedSearchBar()
-                                : NeonCircularButton(
-                                    icon: CupertinoIcons.search,
-                                    onTap: _toggleSearch,
+                              AnimatedOpacity(
+                                duration: const Duration(
+                                  milliseconds: 200,
+                                ),
+                                opacity: _isSearchActive ? 0.0 : 1.0,
+                                child: IgnorePointer(
+                                  ignoring: _isSearchActive,
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: NeonCircularButton(
+                                      icon: CupertinoIcons.refresh_bold,
+                                      onTap: () => provider.refresh(),
+                                    ),
                                   ),
+                                ),
+                              ),
+
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: AnimatedContainer(
+                                  duration: const Duration(
+                                    milliseconds: 400,
+                                  ),
+                                  curve: Curves.easeOutCubic,
+                                  width: _isSearchActive
+                                      ? availableWidth
+                                      : 56,
+                                  height: 56,
+                                  clipBehavior: Clip.hardEdge,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(
+                                      28,
+                                    ),
+                                  ),
+                                  child: _isSearchActive
+                                      ? _buildExpandedSearchBar(
+                                          availableWidth,
+                                        )
+                                      : NeonCircularButton(
+                                          icon: CupertinoIcons.search,
+                                          onTap: _toggleSearch,
+                                        ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -402,9 +427,7 @@ class _FileBrowserLayoutState extends State<_FileBrowserLayout>
     );
   }
 
-  Widget _buildExpandedSearchBar() {
-    final fullWidth = MediaQuery.of(context).size.width - 32;
-
+  Widget _buildExpandedSearchBar(double fullWidth) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(

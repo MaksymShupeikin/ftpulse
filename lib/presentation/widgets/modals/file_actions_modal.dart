@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:file_saver/file_saver.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:ftpulse/core/imports.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -112,34 +112,36 @@ class _FileActionsModalState extends State<FileActionsModal> {
     setState(() => _isDownloading = true);
 
     try {
-      File? fileToSave = _downloadedFile;
+      final fileName = widget.file.name;
+      final ext = fileName.contains('.') ? fileName.split('.').last : '';
 
-      if (fileToSave == null) {
-        final provider = context.read<FileBrowserProvider>();
-        fileToSave = await provider.downloadFileForPreview(
-          widget.file,
+      // Ask for location first
+      final exportPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Select download location',
+        fileName: fileName,
+        type: FileType.any,
+      );
+
+      if (exportPath == null) {
+        setState(() => _isDownloading = false);
+        return;
+      }
+
+      final provider = context.read<FileBrowserProvider>();
+
+      if (_downloadedFile != null) {
+        // We already have it from preview
+        await _downloadedFile!.copy(exportPath);
+      } else {
+        // Download directly to target
+        await provider.downloadEntity(
+          entity: widget.file,
+          localPath: exportPath,
         );
       }
 
-      if (fileToSave != null && mounted) {
-        final fileName = widget.file.name;
-        final ext = fileName.contains('.')
-            ? fileName.split('.').last
-            : '';
-        final nameWithoutExt = fileName.contains('.')
-            ? fileName.substring(0, fileName.lastIndexOf('.'))
-            : fileName;
-
-        final path = await FileSaver.instance.saveAs(
-          name: nameWithoutExt,
-          file: fileToSave,
-          fileExtension: ext,
-          mimeType: MimeType.other,
-        );
-
-        if (path != null) {
-          ToastUtils.show(context, 'Saved successfully!');
-        }
+      if (mounted) {
+        ToastUtils.show(context, 'Saved successfully!');
       }
     } catch (e) {
       if (mounted) {
@@ -185,8 +187,14 @@ class _FileActionsModalState extends State<FileActionsModal> {
     final style = getFileStyle(widget.file);
     final provider = context.read<FileBrowserProvider>();
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: size.height * 0.85),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: Responsive.modalMaxWidth(context),
+          maxHeight: size.height * 0.85,
+        ),
+        child: Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0F0F1A).withOpacity(0.85),
         borderRadius: const BorderRadius.vertical(
@@ -314,6 +322,8 @@ class _FileActionsModalState extends State<FileActionsModal> {
               ],
             ),
           ),
+        ),
+      ),
         ),
       ),
     );
