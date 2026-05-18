@@ -25,8 +25,8 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
       if (_isFolderMode) {
         if (Platform.isAndroid) {
           if (!await Permission.manageExternalStorage.isGranted) {
-            final status = await Permission.manageExternalStorage
-                .request();
+            final status = await Permission.manageExternalStorage.request();
+            if (!mounted) return;
             if (!status.isGranted) {
               ToastUtils.show(
                 context,
@@ -38,16 +38,14 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
           }
         }
 
-        final String? dirPath = await FilePicker.platform
-            .getDirectoryPath();
+        final String? dirPath = await FilePicker.platform.getDirectoryPath();
+        if (!mounted) return;
         if (dirPath != null) {
           final dir = Directory(dirPath);
 
           try {
             final testList = dir.listSync();
-            debugPrint(
-              'Folder check: Found ${testList.length} items',
-            );
+            debugPrint('Folder check: Found ${testList.length} items');
             if (testList.isEmpty) {
               ToastUtils.show(
                 context,
@@ -70,8 +68,10 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
           });
         }
       } else {
-        FilePickerResult? result = await FilePicker.platform
-            .pickFiles(allowMultiple: true);
+        FilePickerResult? result = await FilePicker.platform.pickFiles(
+          allowMultiple: true,
+        );
+        if (!mounted) return;
 
         if (result != null) {
           final newFiles = result.files
@@ -85,7 +85,9 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
         }
       }
     } catch (e) {
-      ToastUtils.show(context, 'Error picking: $e', isError: true);
+      if (mounted) {
+        ToastUtils.show(context, 'Error picking: $e', isError: true);
+      }
     }
   }
 
@@ -107,9 +109,7 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
         count++;
         final name = p.basename(entity.path);
 
-        setState(
-          () => _statusText = 'Uploading $count/$total: $name',
-        );
+        setState(() => _statusText = 'Uploading $count/$total: $name');
 
         if (entity is Directory) {
           await provider.uploadDirectoryRecursive(
@@ -117,8 +117,7 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
             onProgress: (fName) {
               if (mounted) {
                 setState(
-                  () => _statusText =
-                      'Uploading $count/$total: $name ($fName)',
+                  () => _statusText = 'Uploading $count/$total: $name ($fName)',
                 );
               }
             },
@@ -155,221 +154,212 @@ class _UploadEntityModalState extends State<UploadEntityModal> {
           maxHeight: MediaQuery.of(context).size.height * 0.8,
         ),
         child: ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(30),
-      ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F0F1A).withOpacity(0.85),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(30),
-            ),
-            border: Border(
-              top: BorderSide(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-          ),
-          padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(2),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F0F1A).withOpacity(0.85),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
                 ),
               ),
-              const SizedBox(height: 30),
-
-              Text(
-                'Upload Existing',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              if (!_isLoading)
-                NeonToggleSwitch(
-                  options: const ['File', 'Folder'],
-                  selectedIndex: _isFolderMode ? 1 : 0,
-                  onChanged: (index) {
-                    setState(() => _isFolderMode = index == 1);
-                  },
-                ),
-
-              const SizedBox(height: 24),
-
-              if (_selectedEntities.isNotEmpty && !_isLoading)
-                Flexible(
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 24),
+              padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.1),
-                      ),
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.all(0),
-                      itemCount: _selectedEntities.length,
-                      separatorBuilder: (_, _) => Divider(
-                        height: 1,
-                        color: Colors.white.withOpacity(0.1),
-                        indent: 16,
-                        endIndent: 16,
-                      ),
-                      itemBuilder: (context, index) {
-                        final entity = _selectedEntities[index];
-                        final isDir = entity is Directory;
+                  ),
+                  const SizedBox(height: 30),
 
-                        return ListTile(
-                          dense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                          ),
-                          leading: Icon(
-                            isDir
-                                ? CupertinoIcons.folder_solid
-                                : CupertinoIcons.doc_text_fill,
-                            color: isDir
-                                ? const Color(0xFFFF9F0A)
-                                : const Color(0xFF00C2FF),
-                            size: 20,
-                          ),
-                          title: Text(
-                            p.basename(entity.path),
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: SizedBox(
-                            width: 30,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(
-                                CupertinoIcons.clear_circled,
-                                color: Colors.grey,
-                                size: 20,
-                              ),
-                              onPressed: () => setState(() {
-                                _selectedEntities.removeAt(index);
-                              }),
-                            ),
-                          ),
-                        );
+                  Text(
+                    'Upload Existing',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  if (!_isLoading)
+                    NeonToggleSwitch(
+                      options: const ['File', 'Folder'],
+                      selectedIndex: _isFolderMode ? 1 : 0,
+                      onChanged: (index) {
+                        setState(() => _isFolderMode = index == 1);
                       },
                     ),
-                  ),
-                ),
 
-              if (_isLoading)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: Column(
-                    children: [
-                      NeonLoader(size: 40),
-                      const SizedBox(height: 16),
-                      Text(
-                        _statusText ?? 'Processing...',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
+                  const SizedBox(height: 24),
+
+                  if (_selectedEntities.isNotEmpty && !_isLoading)
+                    Flexible(
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 24),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.1),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                )
-              else if (_selectedEntities.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: Center(
-                      child: Text(
-                        _isFolderMode
-                            ? 'Choose folders to upload'
-                            : 'Choose files to upload',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 14,
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.all(0),
+                          itemCount: _selectedEntities.length,
+                          separatorBuilder: (_, _) => Divider(
+                            height: 1,
+                            color: Colors.white.withOpacity(0.1),
+                            indent: 16,
+                            endIndent: 16,
+                          ),
+                          itemBuilder: (context, index) {
+                            final entity = _selectedEntities[index];
+                            final isDir = entity is Directory;
+
+                            return ListTile(
+                              dense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              leading: Icon(
+                                isDir
+                                    ? CupertinoIcons.folder_solid
+                                    : CupertinoIcons.doc_text_fill,
+                                color: isDir
+                                    ? const Color(0xFFFF9F0A)
+                                    : const Color(0xFF00C2FF),
+                                size: 20,
+                              ),
+                              title: Text(
+                                p.basename(entity.path),
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: SizedBox(
+                                width: 30,
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(
+                                    CupertinoIcons.clear_circled,
+                                    color: Colors.grey,
+                                    size: 20,
+                                  ),
+                                  onPressed: () => setState(() {
+                                    _selectedEntities.removeAt(index);
+                                  }),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
-                  ),
-                ),
 
-              if (!_isLoading)
-                if (_selectedEntities.isEmpty)
-                  NeonButton(
-                    text: _isFolderMode
-                        ? 'Select Folder'
-                        : 'Select Files',
-                    isLoading: false,
-                    onTap: _onPick,
-                  )
-                else
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      DarkGlassCard(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 16,
-                        ),
-                        borderRadius: 16,
-                        onTap: _onPick,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              CupertinoIcons.add,
-                              color: Colors.white,
-                              size: 18,
+                  if (_isLoading)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: Column(
+                        children: [
+                          NeonLoader(size: 40),
+                          const SizedBox(height: 16),
+                          Text(
+                            _statusText ?? 'Processing...',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 12,
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _isFolderMode
-                                  ? 'Add Folder'
-                                  : 'Add Files',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (_selectedEntities.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: Center(
+                          child: Text(
+                            _isFolderMode
+                                ? 'Choose folders to upload'
+                                : 'Choose files to upload',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 14,
                             ),
-                          ],
+                          ),
                         ),
                       ),
+                    ),
 
-                      const SizedBox(height: 12),
-
+                  if (!_isLoading)
+                    if (_selectedEntities.isEmpty)
                       NeonButton(
-                        text:
-                            'Upload All (${_selectedEntities.length})',
+                        text: _isFolderMode ? 'Select Folder' : 'Select Files',
                         isLoading: false,
-                        onTap: _onUploadAll,
+                        onTap: _onPick,
+                      )
+                    else
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          DarkGlassCard(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            borderRadius: 16,
+                            onTap: _onPick,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  CupertinoIcons.add,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _isFolderMode ? 'Add Folder' : 'Add Files',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          NeonButton(
+                            text: 'Upload All (${_selectedEntities.length})',
+                            isLoading: false,
+                            onTap: _onUploadAll,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-            ],
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
         ),
       ),
     );

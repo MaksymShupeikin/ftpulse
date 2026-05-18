@@ -20,6 +20,7 @@ class _FolderActionsModalState extends State<FolderActionsModal> {
     if (_isDownloading) return;
 
     try {
+      final provider = context.read<FileBrowserProvider>();
       final selectedPath = await FilePicker.platform.getDirectoryPath(
         dialogTitle: 'Select download destination',
       );
@@ -28,8 +29,6 @@ class _FolderActionsModalState extends State<FolderActionsModal> {
 
       setState(() => _isDownloading = true);
 
-      final provider = context.read<FileBrowserProvider>();
-      
       // We want to download the folder INTO the selected directory,
       // so we append the folder name to the selected path.
       final targetPath = p.join(selectedPath, widget.folder.name);
@@ -62,20 +61,13 @@ class _FolderActionsModalState extends State<FolderActionsModal> {
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF0F0F1A).withOpacity(0.9),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(30),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
             border: Border(
-              top: BorderSide(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
+              top: BorderSide(color: Colors.white.withOpacity(0.2), width: 1),
             ),
           ),
           child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(30),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Padding(
@@ -142,12 +134,19 @@ class _FolderActionsModalState extends State<FolderActionsModal> {
                                 currentName: widget.folder.name,
                                 isFolder: true,
                                 onConfirm: (newName) async {
-                                  final provider = context.read<FileBrowserProvider>();
-                                  final success = await provider.renameFile(widget.folder, newName);
+                                  final provider = context
+                                      .read<FileBrowserProvider>();
+                                  final success = await provider.renameFile(
+                                    widget.folder,
+                                    newName,
+                                  );
 
                                   if (success && context.mounted) {
                                     Navigator.of(context).pop();
-                                    ToastUtils.show(context, 'Renamed to $newName');
+                                    ToastUtils.show(
+                                      context,
+                                      'Renamed to $newName',
+                                    );
                                   }
                                   return success;
                                 },
@@ -164,15 +163,23 @@ class _FolderActionsModalState extends State<FolderActionsModal> {
                               barrierDismissible: false,
                               builder: (ctx) => DeleteDialog(
                                 title: 'Delete Folder?',
-                                message: 'Are you sure you want to delete "${widget.folder.name}" and all its contents? This cannot be undone.',
+                                message:
+                                    'Are you sure you want to delete "${widget.folder.name}" and all its contents? This cannot be undone.',
                                 confirmText: 'Delete Forever',
                                 onConfirm: () async {
-                                  final provider = context.read<FileBrowserProvider>();
-                                  final success = await provider.deleteEntity(widget.folder);
+                                  final provider = context
+                                      .read<FileBrowserProvider>();
+                                  final success = await provider.deleteEntity(
+                                    widget.folder,
+                                  );
 
                                   if (success && context.mounted) {
                                     Navigator.of(context).pop();
-                                    ToastUtils.show(context, 'Folder deleted', isError: true);
+                                    ToastUtils.show(
+                                      context,
+                                      'Folder deleted',
+                                      isError: true,
+                                    );
                                   }
                                   return success;
                                 },

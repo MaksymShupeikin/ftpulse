@@ -1,4 +1,4 @@
-export  'package:flutter/material.dart';
+export 'package:flutter/material.dart';
 export 'package:flutter/services.dart';
 export 'package:ftpulse/data/services/network_service.dart';
 export 'package:google_fonts/google_fonts.dart';
@@ -16,6 +16,7 @@ export 'package:ftpulse/presentation/widgets/cards/dark_glass_card.dart';
 export 'package:ftpulse/presentation/widgets/buttons/neon_circular_button.dart';
 export 'package:ftpulse/core/utils/time_formatter.dart';
 export 'package:ftpulse/core/utils/file_formatter.dart';
+export 'package:ftpulse/core/utils/file_preview_utils.dart';
 export 'dart:io';
 export 'package:ftpulse/presentation/widgets/neon_loader.dart';
 export 'package:ftpulse/presentation/widgets/buttons/neon_button.dart';

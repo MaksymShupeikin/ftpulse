@@ -39,10 +39,7 @@ class FileBrowserProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _networkService.listFiles(
-        connection,
-        path,
-      );
+      final result = await _networkService.listFiles(connection, path);
 
       if (!_isLoading) {
         debugPrint('Navigation cancelled via Back button');
@@ -120,9 +117,7 @@ class FileBrowserProvider extends ChangeNotifier {
 
   Future<bool> uploadFile(File localFile) async {
     try {
-      final fileName = localFile.path
-          .split(Platform.pathSeparator)
-          .last;
+      final fileName = localFile.path.split(Platform.pathSeparator).last;
       final fileSize = await localFile.length();
 
       String remotePath = _currentPath.endsWith('/')
@@ -176,7 +171,6 @@ class FileBrowserProvider extends ChangeNotifier {
         remoteBaseDir: remoteTargetDir,
         onProgress: onProgress,
       );
-
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -187,8 +181,21 @@ class FileBrowserProvider extends ChangeNotifier {
   Future<File?> downloadFileForPreview(FileEntity file) async {
     try {
       final tempDir = await getTemporaryDirectory();
+      final cacheDir = Directory(
+        p.join(tempDir.path, 'ftpulse_preview', connection.id),
+      );
+      if (!await cacheDir.exists()) {
+        await cacheDir.create(recursive: true);
+      }
+
       final safeName = file.name.replaceAll(RegExp(r'[^\w\.-]'), '_');
-      final localPath = '${tempDir.path}/${connection.id}_$safeName';
+      final safePath = file.path
+          .replaceAll(RegExp(r'[^\w\.-]'), '_')
+          .replaceAll(RegExp(r'_+'), '_');
+      final pathKey = safePath.length > 120
+          ? '${safePath.hashCode.abs()}_$safeName'
+          : safePath;
+      final localPath = p.join(cacheDir.path, '${file.size}_$pathKey');
       final localFile = File(localPath);
 
       if (await localFile.exists()) {
@@ -236,10 +243,7 @@ class FileBrowserProvider extends ChangeNotifier {
 
   Future<bool> renameFile(FileEntity file, String newName) async {
     try {
-      final parentPath = file.path.substring(
-        0,
-        file.path.lastIndexOf('/') + 1,
-      );
+      final parentPath = file.path.substring(0, file.path.lastIndexOf('/') + 1);
       final newPath = '$parentPath$newName';
 
       await _networkService.renameFile(
@@ -248,9 +252,7 @@ class FileBrowserProvider extends ChangeNotifier {
         newPath: newPath,
       );
 
-      final index = _files.indexWhere(
-        (element) => element.path == file.path,
-      );
+      final index = _files.indexWhere((element) => element.path == file.path);
 
       if (index != -1) {
         final updatedFile = FileEntity(
@@ -311,9 +313,7 @@ class FileBrowserProvider extends ChangeNotifier {
   }
 
   bool navigateUp() {
-    if (_currentPath == '/' ||
-        _currentPath.isEmpty ||
-        _currentPath == '.') {
+    if (_currentPath == '/' || _currentPath.isEmpty || _currentPath == '.') {
       return false;
     }
 
